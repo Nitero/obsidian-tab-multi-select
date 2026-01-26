@@ -3,7 +3,7 @@
 	"name": "Tab Multi Select",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
+	"description": "Select and control multiple tabs with browser-like inputs.",
 	"author": "Nito",
 	"authorUrl": "https://github.com/Nitero",
 	"isDesktopOnly": true
