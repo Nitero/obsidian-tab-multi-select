@@ -33,7 +33,7 @@ export default class MultiSelectTabsPlugin extends Plugin {
 	private contextMenu: ContextMenuController;
 	private selectionEvents: SelectionEventsController;
 
-	async onload() {
+	onload() {
 		const logger = new Logger();
 		const selection = new SelectionStore();
 		const closeHistory = new CloseHistory();
