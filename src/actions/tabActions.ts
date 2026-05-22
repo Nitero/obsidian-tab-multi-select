@@ -81,7 +81,7 @@ export class TabActions {
 			targetTabs.updateSlidingTabs?.();
 			targetTabs.selectTab?.(first, false);
 
-			const destinationDoc = first.tabHeaderEl?.ownerDocument ?? document;
+			const destinationDoc = first.tabHeaderEl?.ownerDocument ?? activeDocument;
 			this.services.selection.setDocumentSelection(destinationDoc, all);
 
 			new Notice(`Moved ${all.length} tab(s) to a new window.`);

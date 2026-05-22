@@ -59,10 +59,10 @@ export default class MultiSelectTabsPlugin extends Plugin {
 			this.tabActions,
 		);
 
-		this.attach(document);
+		this.attach(activeDocument);
 		this.registerEvent(
 			this.app.workspace.on("window-open", (_win: WorkspaceWindow, w: Window) => {
-				this.attach(w.document);
+				this.attach(w.activeDocument);
 			})
 		);
 

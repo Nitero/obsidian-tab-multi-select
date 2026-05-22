@@ -127,7 +127,7 @@ export class DragController {
 		try {
 			this.reinsertDraggedSelectionAroundPrimaryTab(targetTabs, snapshot, dragged);
 
-			const destinationDoc = dragged.getContainer().doc ?? dragDoc ?? document;
+			const destinationDoc = dragged.getContainer().doc ?? dragDoc ?? activeDocument;
 			this.services.selection.setDocumentSelection(destinationDoc, snapshot);
 		} catch (e) {
 			this.services.logger.logWarn(`${this.finalizeMultiDrag.name} failed`, e);
