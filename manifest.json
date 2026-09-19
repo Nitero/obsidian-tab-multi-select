@@ -1,7 +1,7 @@
 {
 	"id": "tab-multi-select",
 	"name": "Tab Multi Select",
-	"version": "1.0.4",
+	"version": "1.0.5",
 	"minAppVersion": "0.16.3",
 	"description": "Select and control multiple tabs with browser-like inputs.",
 	"author": "Nito",
