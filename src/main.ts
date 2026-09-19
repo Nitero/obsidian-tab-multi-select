@@ -1,4 +1,4 @@
-import {Plugin, WorkspaceWindow, App, addIcon} from "obsidian";
+import {Plugin, WorkspaceWindow, App} from "obsidian";
 
 import {SelectionStore} from "./selection/selectionStore";
 

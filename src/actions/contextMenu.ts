@@ -1,9 +1,10 @@
-import {addIcon, Menu, Notice} from "obsidian";
+import {Menu, Notice} from "obsidian";
 import {
 	buildTabHeaderToLeafResolver,
 	listLeavesInGroupInDomOrder,
 	findTabGroupForHeader,
 	findTabHeaderFromEvent,
+	listRootLeavesInDocument,
 } from "../utils/domUtils";
 import MultiSelectTabsPlugin, {PluginServices} from "../main";
 import {TabActions} from "./tabActions";
@@ -48,6 +49,10 @@ export class ContextMenuController {
 		const selectionSnapshot = selectedInGroup.slice();
 		const allLeavesInGroup = listLeavesInGroupInDomOrder(group, resolveLeaf);
 		const otherLeavesInGroup = allLeavesInGroup.filter((leaf) => !selectionSnapshot.includes(leaf));
+		const allLeavesInDocument = listRootLeavesInDocument(this.services.app, doc);
+		const selectedInDocument = this.services.selection.getSelectedLeavesInDocument(doc, allLeavesInDocument);
+		const selectedInDocumentSet = new Set(selectedInDocument);
+		const otherLeavesInDocument = allLeavesInDocument.filter((leaf) => !selectedInDocumentSet.has(leaf));
 
 		const menu = new Menu();
 
@@ -58,7 +63,14 @@ export class ContextMenuController {
 		});
 
 		menu.addItem((item) => {
-			item.setTitle(`Close all others in group (${otherLeavesInGroup.length})`);
+			item.setTitle(`Close all other tabs (${otherLeavesInDocument.length})`);
+			item.setIcon("x");
+			item.setDisabled(otherLeavesInDocument.length === 0);
+			item.onClick(() => this.tabActions.closeTabs(otherLeavesInDocument, false));
+		});
+
+		menu.addItem((item) => {
+			item.setTitle(`Close all other tabs in group (${otherLeavesInGroup.length})`);
 			item.setIcon("x");
 			item.setDisabled(otherLeavesInGroup.length === 0);
 			item.onClick(() => this.tabActions.closeTabs(otherLeavesInGroup, false));

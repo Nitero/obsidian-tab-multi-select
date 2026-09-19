@@ -39,6 +39,16 @@ export function buildTabHeaderToLeafResolver(app: App) {
 	return (header: HTMLElement): WorkspaceLeaf | null => map.get(header) ?? null;
 }
 
+export function listRootLeavesInDocument(app: App, doc: Document): WorkspaceLeaf[] {
+	const leaves: WorkspaceLeaf[] = [];
+	app.workspace.iterateRootLeaves((leaf: WorkspaceLeaf) => {
+		const leafDoc = leaf.tabHeaderEl?.ownerDocument ?? leaf.getContainer().doc;
+		if (leafDoc === doc)
+			leaves.push(leaf);
+	});
+	return leaves;
+}
+
 export function listLeavesInGroupInDomOrder(
 	group: HTMLElement,
 	resolveLeaf: (h: HTMLElement) => WorkspaceLeaf | null

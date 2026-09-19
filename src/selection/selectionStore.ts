@@ -114,8 +114,31 @@ export class SelectionStore {
 			const leaf = resolveLeaf(header);
 			if (!leaf)
 				continue;
-			if (!selection.has(leaf))
+			if (!selection.has(leaf) && !this.isTabHeaderSelected(header))
 				continue;
+			if (!selection.has(leaf))
+				selection.add(leaf);
+			if (seen.has(leaf))
+				continue;
+
+			seen.add(leaf);
+			out.push(leaf);
+		}
+
+		return out;
+	}
+
+	getSelectedLeavesInDocument(doc: Document, leavesInOrder: WorkspaceLeaf[]): WorkspaceLeaf[] {
+		const selection = this.getOrCreateDocumentSelection(doc);
+		const out: WorkspaceLeaf[] = [];
+		const seen = new Set<WorkspaceLeaf>();
+
+		for (const leaf of leavesInOrder) {
+			const header = this.getTabHeader(leaf, doc);
+			if (!selection.has(leaf) && (!header || !this.isTabHeaderSelected(header)))
+				continue;
+			if (!selection.has(leaf))
+				selection.add(leaf);
 			if (seen.has(leaf))
 				continue;
 
@@ -166,6 +189,10 @@ export class SelectionStore {
 
 	private setTabHeaderSelected(header: HTMLElement, selected: boolean) {
 		header.classList.toggle(SELECTED_HEADER_CLASS, selected);
+	}
+
+	private isTabHeaderSelected(header: HTMLElement): boolean {
+		return header.classList.contains(SELECTED_HEADER_CLASS);
 	}
 
 	private setLeafSelection(doc: Document, leaf: WorkspaceLeaf, selected: boolean) {

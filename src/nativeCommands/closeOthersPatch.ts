@@ -4,9 +4,9 @@ import {
 } from "../core/constants";
 import {PluginServices} from "../main";
 import {patchNativeCommand} from "../utils/nativeCommandPatch";
-import {ActiveTabContext, getActiveTabContext, getSelectedTabContext, SelectedTabContext} from "./selectedTabContext";
+import {buildTabHeaderToLeafResolver, listRootLeavesInDocument} from "../utils/domUtils";
+import {getActiveTabContext} from "./selectedTabContext";
 import {TabActions} from "../actions/tabActions";
-import {WorkspaceLeaf} from "obsidian";
 
 export class CloseOthersPatch {
 	private unpatch: (() => void) | null = null;
@@ -43,54 +43,49 @@ export class CloseOthersPatch {
 	}
 
 	private closeOtherTabsInDocument(): boolean {
-		const context = getSelectedTabContext(this.services) ?? getActiveTabContext(this.services);
+		const context = getActiveTabContext(this.services);
 		if (!context)
 			return false;
 
-		const rootLeaves = this.getRootLeavesInDocument(context.doc);
+		const rootLeaves = listRootLeavesInDocument(this.services.app, context.doc);
 		if (!rootLeaves.includes(context.activeLeaf))
 			return false;
 
-		const leavesToKeep = this.getLeavesToKeep(context);
+		const selectedLeaves = this.services.selection.getSelectedLeavesInDocument(context.doc, rootLeaves);
+		const usedSelectedTabs = selectedLeaves.length > 0;
+		const leavesToKeep = selectedLeaves.length > 0
+			? selectedLeaves
+			: [context.activeLeaf];
 		const keepSet = new Set(leavesToKeep);
 		const leavesToClose = rootLeaves.filter((leaf) => !keepSet.has(leaf));
 
 		if (leavesToClose.length > 0)
 			this.tabActions.closeTabs(leavesToClose, false);
+		if (usedSelectedTabs)
+			this.services.selection.clearDocumentSelection(context.doc);
 		return true;
 	}
 
 	private closeOtherTabsInGroup(): boolean {
-		const context = getSelectedTabContext(this.services) ?? getActiveTabContext(this.services);
+		const context = getActiveTabContext(this.services);
 		if (!context)
 			return false;
 
-		const leavesToKeep = this.getLeavesToKeep(context);
+		const resolveLeaf = buildTabHeaderToLeafResolver(this.services.app);
+		this.services.selection.syncTabGroupSelectionFromDom(context.group, resolveLeaf);
+
+		const selectedLeaves = this.services.selection.getSelectedLeavesInTabGroup(context.doc, context.group, resolveLeaf);
+		const usedSelectedTabs = selectedLeaves.length > 0;
+		const leavesToKeep = selectedLeaves.length > 0
+			? selectedLeaves
+			: [context.activeLeaf];
 		const keepSet = new Set(leavesToKeep);
 		const leavesToClose = context.leavesInGroup.filter((leaf) => !keepSet.has(leaf));
 
 		if (leavesToClose.length > 0)
 			this.tabActions.closeTabs(leavesToClose, false);
+		if (usedSelectedTabs)
+			this.services.selection.clearTabGroupSelection(context.group, resolveLeaf);
 		return true;
-	}
-
-	private getRootLeavesInDocument(doc: Document): WorkspaceLeaf[] {
-		const leaves: WorkspaceLeaf[] = [];
-		this.services.app.workspace.iterateRootLeaves((leaf) => {
-			const leafDoc = leaf.tabHeaderEl?.ownerDocument ?? leaf.getContainer().doc;
-			if (leafDoc === doc)
-				leaves.push(leaf);
-		});
-		return leaves;
-	}
-
-	private getLeavesToKeep(context: ActiveTabContext | SelectedTabContext): WorkspaceLeaf[] {
-		return this.hasSelectedLeaves(context)
-			? context.selectedLeaves
-			: [context.activeLeaf];
-	}
-
-	private hasSelectedLeaves(context: ActiveTabContext | SelectedTabContext): context is SelectedTabContext {
-		return "selectedLeaves" in context;
 	}
 }
