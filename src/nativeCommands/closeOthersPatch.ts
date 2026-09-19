@@ -52,8 +52,8 @@ export class CloseOthersPatch {
 			return false;
 
 		const selectedLeaves = this.services.selection.getSelectedLeavesInDocument(context.doc, rootLeaves);
-		const usedSelectedTabs = selectedLeaves.length > 0;
-		const leavesToKeep = selectedLeaves.length > 0
+		const usedSelectedTabs = selectedLeaves.includes(context.activeLeaf);
+		const leavesToKeep = usedSelectedTabs
 			? selectedLeaves
 			: [context.activeLeaf];
 		const keepSet = new Set(leavesToKeep);
@@ -75,8 +75,8 @@ export class CloseOthersPatch {
 		this.services.selection.syncTabGroupSelectionFromDom(context.group, resolveLeaf);
 
 		const selectedLeaves = this.services.selection.getSelectedLeavesInTabGroup(context.doc, context.group, resolveLeaf);
-		const usedSelectedTabs = selectedLeaves.length > 0;
-		const leavesToKeep = selectedLeaves.length > 0
+		const usedSelectedTabs = selectedLeaves.includes(context.activeLeaf);
+		const leavesToKeep = usedSelectedTabs
 			? selectedLeaves
 			: [context.activeLeaf];
 		const keepSet = new Set(leavesToKeep);
