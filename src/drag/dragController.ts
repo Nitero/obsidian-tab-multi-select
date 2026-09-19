@@ -75,7 +75,7 @@ export class DragController {
 		}
 
 		const effect = event.dataTransfer?.dropEffect ?? "";
-		if (effect !== "move" && effect !== "none") {
+		if (effect === "copy") {
 			this.resetDragState();
 			return;
 		}
@@ -90,7 +90,20 @@ export class DragController {
 			return;
 		}
 
-		this.finalizeMultiDrag(dragged, snapshot, restore, dragDoc);
+		this.deferFinalizeMultiDrag(dragged, snapshot, restore, dragDoc);
+	}
+
+	private deferFinalizeMultiDrag(
+		dragged: WorkspaceLeaf,
+		snapshot: WorkspaceLeaf[],
+		restore: OriginalTabPosition[],
+		dragDoc: Document | null
+	) {
+		const win = dragDoc?.defaultView ?? window;
+
+		win.setTimeout(() => {
+			this.finalizeMultiDrag(dragged, snapshot, restore, dragDoc);
+		}, 0);
 	}
 
 	private captureOriginalTabPositions(leavesInOrder: WorkspaceLeaf[]): OriginalTabPosition[] {
