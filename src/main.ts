@@ -1,4 +1,4 @@
-import {Plugin, WorkspaceWindow, App} from "obsidian";
+import {Plugin, WorkspaceWindow, App, addIcon} from "obsidian";
 
 import {SelectionStore} from "./selection/selectionStore";
 
@@ -15,6 +15,7 @@ import {ClosePatch} from "./nativeCommands/closePatch";
 import {CloseOthersPatch} from "./nativeCommands/closeOthersPatch";
 import {MoveToNewWindowPatch} from "./nativeCommands/moveToNewWindowPatch";
 import {TogglePinPatch} from "./nativeCommands/togglePinPatch";
+import {CustomLucideIcons} from "./utils/lucideIcons";
 
 
 export type PluginServices = {
@@ -63,6 +64,7 @@ export default class MultiSelectTabsPlugin extends Plugin {
 		this.togglePinPatch = new TogglePinPatch(this.services, this.tabActions);
 		this.dragController = new DragController(this.services, this.tabActions);
 
+		new CustomLucideIcons();
 		this.contextMenu = new ContextMenuController(this.services, this.tabActions);
 
 		this.selectionEvents = new SelectionEventsController(

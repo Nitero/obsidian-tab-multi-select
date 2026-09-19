@@ -1,4 +1,4 @@
-import {Menu, Notice} from "obsidian";
+import {addIcon, Menu, Notice} from "obsidian";
 import {
 	buildTabHeaderToLeafResolver,
 	listLeavesInGroupInDomOrder,
@@ -58,7 +58,7 @@ export class ContextMenuController {
 		});
 
 		menu.addItem((item) => {
-			item.setTitle(`Close all others (${otherLeavesInGroup.length})`);
+			item.setTitle(`Close all others in group (${otherLeavesInGroup.length})`);
 			item.setIcon("x");
 			item.setDisabled(otherLeavesInGroup.length === 0);
 			item.onClick(() => this.tabActions.closeTabs(otherLeavesInGroup, false));
@@ -76,6 +76,12 @@ export class ContextMenuController {
 			item.setTitle("Unpin selected");
 			item.setIcon("pin-off");
 			item.onClick(() => this.tabActions.unpinTabs(selectionSnapshot));
+		});
+
+		menu.addItem((item) => {
+			item.setTitle("Toggle pin selected");
+			item.setIcon("pin-toggle");
+			item.onClick(() => this.tabActions.togglePinTabs(selectedInGroup, clickedLeaf));
 		});
 
 		menu.addSeparator();
