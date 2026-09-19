@@ -11,6 +11,10 @@ import {TabActions} from "./actions/tabActions";
 import {ContextMenuController} from "./actions/contextMenu";
 import {SelectionEventsController} from "./selection/selectionEvents";
 import {Logger} from "./utils/logger";
+import {ClosePatch} from "./nativeCommands/closePatch";
+import {CloseOthersPatch} from "./nativeCommands/closeOthersPatch";
+import {MoveToNewWindowPatch} from "./nativeCommands/moveToNewWindowPatch";
+import {TogglePinPatch} from "./nativeCommands/togglePinPatch";
 
 
 export type PluginServices = {
@@ -23,15 +27,19 @@ export type PluginServices = {
 export default class MultiSelectTabsPlugin extends Plugin {
 	private attachedDocs = new Set<Document>();
 
-	private services: PluginServices;
+	private services!: PluginServices;
 
-	private detachPatch: DetachPatch;
-	private undoPatch: UndoPatch;
+	private detachPatch!: DetachPatch;
+	private undoPatch!: UndoPatch;
+	private closePatch!: ClosePatch;
+	private closeOthersPatch!: CloseOthersPatch;
+	private moveToNewWindowPatch!: MoveToNewWindowPatch;
+	private togglePinPatch!: TogglePinPatch;
 
-	private tabActions: TabActions;
-	private dragController: DragController;
-	private contextMenu: ContextMenuController;
-	private selectionEvents: SelectionEventsController;
+	private tabActions!: TabActions;
+	private dragController!: DragController;
+	private contextMenu!: ContextMenuController;
+	private selectionEvents!: SelectionEventsController;
 
 	onload() {
 		const logger = new Logger();
@@ -49,6 +57,10 @@ export default class MultiSelectTabsPlugin extends Plugin {
 		this.undoPatch = new UndoPatch(this.services);
 
 		this.tabActions = new TabActions(this.services);
+		this.closePatch = new ClosePatch(this.services, this.tabActions);
+		this.closeOthersPatch = new CloseOthersPatch(this.services, this.tabActions);
+		this.moveToNewWindowPatch = new MoveToNewWindowPatch(this.services, this.tabActions);
+		this.togglePinPatch = new TogglePinPatch(this.services, this.tabActions);
 		this.dragController = new DragController(this.services, this.tabActions);
 
 		this.contextMenu = new ContextMenuController(this.services, this.tabActions);
@@ -68,6 +80,34 @@ export default class MultiSelectTabsPlugin extends Plugin {
 
 		this.detachPatch.install();
 		this.undoPatch.install();
+		this.closePatch.install();
+		this.closeOthersPatch.install();
+		this.moveToNewWindowPatch.install();
+		this.togglePinPatch.install();
+
+		this.registerDomEvent(window, "blur", () => {
+			const element = document.activeElement;
+
+			if (!(element instanceof HTMLElement)) {
+				return;
+			}
+
+			const isEditable =
+				element.matches("input, textarea, [contenteditable='true']");
+
+			if (!isEditable) {
+				return;
+			}
+
+			const shouldBlur =
+				element.closest(".metadata-container") !== null ||
+				element.closest(".search-input-container") !== null ||
+				element.closest(".document-search-container") !== null;
+
+			if (shouldBlur) {
+				element.blur();
+			}
+		});
 	}
 
 	onunload() {
@@ -78,6 +118,10 @@ export default class MultiSelectTabsPlugin extends Plugin {
 
 		this.services?.closeHistory.clear();
 
+		this.togglePinPatch?.uninstall();
+		this.moveToNewWindowPatch?.uninstall();
+		this.closeOthersPatch?.uninstall();
+		this.closePatch?.uninstall();
 		this.detachPatch?.uninstall();
 		this.undoPatch?.uninstall();
 	}

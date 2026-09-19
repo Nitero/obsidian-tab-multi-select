@@ -22,9 +22,9 @@ export function listTabHeadersInGroup(group: HTMLElement): HTMLElement[] {
 
 export function findActiveTabHeaderInGroup(group: HTMLElement): HTMLElement | null {
 	return (
-		(group.querySelector(`${TAB_HEADER_SELECTOR}.is-active`) as HTMLElement) ||
-		(group.querySelector(`${TAB_HEADER_SELECTOR}[aria-selected='true']`) as HTMLElement) ||
-		(group.querySelector(`${TAB_HEADER_SELECTOR}.mod-active`) as HTMLElement)
+		(group.querySelector(`${TAB_HEADER_SELECTOR}.is-active`)) ||
+		(group.querySelector(`${TAB_HEADER_SELECTOR}[aria-selected='true']`)) ||
+		(group.querySelector(`${TAB_HEADER_SELECTOR}.mod-active`))
 	);
 }
 
@@ -44,6 +44,13 @@ export function listLeavesInGroupInDomOrder(
 	resolveLeaf: (h: HTMLElement) => WorkspaceLeaf | null
 ): WorkspaceLeaf[] {
 	const headers = listTabHeadersInGroup(group);
+	return listLeavesForTabHeaders(headers, resolveLeaf);
+}
+
+function listLeavesForTabHeaders(
+	headers: HTMLElement[],
+	resolveLeaf: (h: HTMLElement) => WorkspaceLeaf | null
+): WorkspaceLeaf[] {
 	const out: WorkspaceLeaf[] = [];
 	const seen = new Set<WorkspaceLeaf>();
 

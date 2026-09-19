@@ -47,7 +47,7 @@ export class DetachPatch {
 		const {closeHistory, logger} = this.services;
 
 		this.unpatch = patchMethod(proto, "detach", (orig) => {
-			return function patchedDetach(this: WorkspaceLeaf, ...args: unknown[]) {
+			return function patchedDetach(this: WorkspaceLeaf, ...args: []) {
 				if (!closeHistory.isBatchUndoInProgress() && !closeHistory.isInExplicitTransaction()) {
 					try {
 						closeHistory.recordLeafClose(this);

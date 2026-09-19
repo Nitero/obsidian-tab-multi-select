@@ -17,16 +17,71 @@ export class TabActions {
 		this.setPinned(leaves, false, "Unpinned");
 	}
 
+	togglePinTabs(leaves: WorkspaceLeaf[], activeLeaf: WorkspaceLeaf) {
+		if (leaves.length === 0) {
+			new Notice(RESOLVE_FAILED_NOTICE);
+			return;
+		}
+
+		this.clearSelectionForLeaves(leaves);
+
+		for (const leaf of leaves)
+			leaf.setPinned(leaf.getViewState().pinned !== true);
+
+		this.restoreActiveLeaf(activeLeaf);
+		this.clearSelectionForLeaves(leaves);
+		window.setTimeout(() => {
+			this.restoreActiveLeaf(activeLeaf);
+			this.clearSelectionForLeaves(leaves);
+		}, 0);
+
+		new Notice(`Toggled pin for ${leaves.length} tab(s).`);
+	}
+
 	private setPinned(leaves: WorkspaceLeaf[], pinned: boolean, noticePrefix: string) {
 		if (leaves.length === 0) {
 			new Notice(RESOLVE_FAILED_NOTICE);
 			return;
 		}
 
+		this.clearSelectionForLeaves(leaves);
+
 		for (const leaf of leaves)
 			leaf.setPinned(pinned);
 
+		const activeLeaf = (this.services.app.workspace as { activeLeaf: WorkspaceLeaf | null }).activeLeaf;
+		this.restoreActiveLeaf(activeLeaf);
+		this.clearSelectionForLeaves(leaves);
+		window.setTimeout(() => {
+			this.restoreActiveLeaf(activeLeaf);
+			this.clearSelectionForLeaves(leaves);
+		}, 0);
+
 		new Notice(`${noticePrefix} ${leaves.length} tab(s).`);
+	}
+
+	private restoreActiveLeaf(leaf: WorkspaceLeaf | null) {
+		if (!leaf)
+			return;
+
+		try {
+			this.services.app.workspace.setActiveLeaf(leaf, {focus: true});
+			(leaf.parent as WorkspaceTabs | null)?.selectTab?.(leaf, false);
+		} catch (e) {
+			this.services.logger.logWarn(`${this.restoreActiveLeaf.name} failed`, e);
+		}
+	}
+
+	private clearSelectionForLeaves(leaves: WorkspaceLeaf[]) {
+		const docs = new Set<Document>();
+		for (const leaf of leaves) {
+			const doc = leaf.tabHeaderEl?.ownerDocument ?? leaf.getContainer().doc;
+			if (doc)
+				docs.add(doc);
+		}
+
+		for (const doc of docs)
+			this.services.selection.clearDocumentSelection(doc);
 	}
 
 	moveTabsToNewWindow(leaves: WorkspaceLeaf[]) {

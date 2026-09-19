@@ -1,7 +1,7 @@
 import {CloseEntry} from "./closeHistory";
 import {UNDO_CLOSE_PANE_COMMAND_ID} from "../core/constants";
 import {PluginServices} from "../main";
-import {patchMethod} from "../utils/patchUtils";
+import {patchNativeCommand} from "../utils/nativeCommandPatch";
 
 export class UndoPatch {
 	private unpatch: (() => void) | null = null;
@@ -13,59 +13,11 @@ export class UndoPatch {
 		if (this.unpatch)
 			return;
 
-		const commands = this.services.app.commands;
-		if (!commands)
-			return;
-
-		const origExecuteById = commands.executeCommandById;
-		const origExecuteCmd = commands.executeCommand;
-
-		const execNativeUndoOnce = (): boolean => {
-			try {
-				if (origExecuteById)
-					return origExecuteById.call(commands, UNDO_CLOSE_PANE_COMMAND_ID);
-				if (origExecuteCmd) {
-					origExecuteCmd.call(commands, {id: UNDO_CLOSE_PANE_COMMAND_ID});
-					return true;
-				}
-			} catch (e) {
-				this.services.logger.logWarn("native undo failed", e);
-			}
-			return false;
-		};
-
-		const maybeHandleUndo = (): boolean => {
+		this.unpatch = patchNativeCommand(this.services, UNDO_CLOSE_PANE_COMMAND_ID, (execNativeUndoOnce) => {
 			if (this.services.closeHistory.isBatchUndoInProgress())
 				return false;
 			return this.runBatchedUndoIfAvailable(execNativeUndoOnce);
-		};
-
-		const unpatches: Array<() => void> = [];
-
-		if (origExecuteById) {
-			unpatches.push(
-				patchMethod(commands, "executeCommandById", (orig) => {
-					return ((id: string) => {
-						if (id === UNDO_CLOSE_PANE_COMMAND_ID && maybeHandleUndo()) return true;
-						return (orig as (id: string) => unknown).call(commands, id);
-					}) as typeof commands.executeCommandById;
-				})
-			);
-		}
-
-		if (origExecuteCmd) {
-			unpatches.push(
-				patchMethod(commands, "executeCommand", (orig) => {
-					return ((cmd: { id: string }) => {
-						if (cmd?.id === UNDO_CLOSE_PANE_COMMAND_ID && maybeHandleUndo())
-							return;
-						return (orig as (cmd: { id: string }) => unknown).call(commands, cmd);
-					}) as typeof commands.executeCommand;
-				})
-			);
-		}
-
-		this.unpatch = () => unpatches.forEach((fn) => fn());
+		});
 	}
 
 	uninstall() {
@@ -80,11 +32,12 @@ export class UndoPatch {
 
 		this.services.closeHistory.setBatchUndoInProgress(true);
 		try {
-			for (let i = transaction.entries.length - 1; i >= 0; i--) {
-				const entry = transaction.entries[i];
-				if (entry)
-					this.undoOnceAndReposition(execNativeUndoOnce, entry);
-			}
+			const entries = transaction.replayInRecordedOrder
+				? transaction.entries
+				: transaction.entries.slice().reverse();
+
+			for (const entry of entries)
+				this.undoOnceAndReposition(execNativeUndoOnce, entry);
 		} finally {
 			this.services.closeHistory.setBatchUndoInProgress(false);
 		}
