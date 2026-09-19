@@ -21,8 +21,14 @@ export class SelectionEventsController {
 	}
 
 	registerForDocument(doc: Document, plugin: MultiSelectTabsPlugin) {
-		plugin.registerDomEvent(doc, "pointerdown", (event) => this.onPointerDownCapture(event), true);
-		plugin.registerDomEvent(doc, "click", (event) => this.onClickCapture(event), true);
+		const win = doc.defaultView;
+		if (win) {
+			plugin.registerDomEvent(win, "pointerdown", (event) => this.onPointerDownCapture(event), true);
+			plugin.registerDomEvent(win, "click", (event) => this.onClickCapture(event), true);
+		} else {
+			plugin.registerDomEvent(doc, "pointerdown", (event) => this.onPointerDownCapture(event), true);
+			plugin.registerDomEvent(doc, "click", (event) => this.onClickCapture(event), true);
+		}
 
 		plugin.registerDomEvent(doc, "pointerdown", (event) =>
 			this.onPointerDownBubbleClearEmpty(event, doc)

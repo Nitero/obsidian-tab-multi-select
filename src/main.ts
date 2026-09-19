@@ -27,6 +27,7 @@ export type PluginServices = {
 
 export default class MultiSelectTabsPlugin extends Plugin {
 	private attachedDocs = new Set<Document>();
+	private isUnloading = false;
 
 	private services!: PluginServices;
 
@@ -43,6 +44,8 @@ export default class MultiSelectTabsPlugin extends Plugin {
 	private selectionEvents!: SelectionEventsController;
 
 	onload() {
+		this.isUnloading = false;
+
 		const logger = new Logger();
 		const selection = new SelectionStore();
 		const closeHistory = new CloseHistory();
@@ -73,9 +76,17 @@ export default class MultiSelectTabsPlugin extends Plugin {
 			this.tabActions,
 		);
 
-		this.attach(activeDocument);
+		this.attachKnownDocuments();
+		this.app.workspace.onLayoutReady(() => this.attachKnownDocuments());
+		this.registerEvent(
+			this.app.workspace.on("layout-change", () => this.attachKnownDocuments())
+		);
+		this.registerEvent(
+			this.app.workspace.on("active-leaf-change", () => this.attachKnownDocuments())
+		);
 		this.registerEvent(
 			this.app.workspace.on("window-open", (_win: WorkspaceWindow, w: Window) => {
+				this.attach(w.document);
 				this.attach(w.activeDocument);
 			})
 		);
@@ -113,6 +124,8 @@ export default class MultiSelectTabsPlugin extends Plugin {
 	}
 
 	onunload() {
+		this.isUnloading = true;
+
 		for (const doc of this.attachedDocs)
 			this.services.selection.clearDocumentSelection(doc);
 
@@ -126,6 +139,19 @@ export default class MultiSelectTabsPlugin extends Plugin {
 		this.closePatch?.uninstall();
 		this.detachPatch?.uninstall();
 		this.undoPatch?.uninstall();
+	}
+
+	private attachKnownDocuments() {
+		if (this.isUnloading)
+			return;
+
+		this.attach(document);
+		this.attach(activeDocument);
+
+		this.app.workspace.iterateAllLeaves((leaf) => {
+			const leafDoc = leaf.tabHeaderEl?.ownerDocument ?? leaf.getContainer().doc;
+			this.attach(leafDoc);
+		});
 	}
 
 	private attach(doc: Document) {
