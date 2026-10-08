@@ -97,30 +97,6 @@ export default class MultiSelectTabsPlugin extends Plugin {
 		this.closeOthersPatch.install();
 		this.moveToNewWindowPatch.install();
 		this.togglePinPatch.install();
-
-		this.registerDomEvent(window, "blur", () => {
-			const element = document.activeElement;
-
-			if (!(element instanceof HTMLElement)) {
-				return;
-			}
-
-			const isEditable =
-				element.matches("input, textarea, [contenteditable='true']");
-
-			if (!isEditable) {
-				return;
-			}
-
-			const shouldBlur =
-				element.closest(".metadata-container") !== null ||
-				element.closest(".search-input-container") !== null ||
-				element.closest(".document-search-container") !== null;
-
-			if (shouldBlur) {
-				element.blur();
-			}
-		});
 	}
 
 	onunload() {
