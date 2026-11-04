@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-tab-multi-select",
+	"version": "1.0.6",
+	"description": "Select and control multiple tabs with browser-like inputs.",
 	"main": "main.js",
 	"type": "module",
 	"scripts": {
