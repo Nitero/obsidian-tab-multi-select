@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-tab-multi-select",
-	"version": "1.0.6",
+	"version": "1.0.7",
 	"description": "Select and control multiple tabs with browser-like inputs.",
 	"main": "main.js",
 	"type": "module",
